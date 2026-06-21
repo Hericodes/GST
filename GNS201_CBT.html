@@ -92,10 +92,10 @@
     font-weight: 600; cursor: pointer; border: none; transition: opacity .18s, transform .1s; }
   .btn:active { transform: scale(.97); }
   .btn-primary { background: var(--green); color: #fff; }
-  .btn-primary:hover { background: var(--green2); }
+  .btn-primary:hover:not(:disabled) { background: var(--green2); }
   .btn-outline { background: #fff; color: var(--green); border: 2px solid var(--green); }
-  .btn-outline:hover { background: #f0f8f3; }
-  .btn:disabled { opacity: .4; cursor: default; }
+  .btn-outline:hover:not(:disabled) { background: #f0f8f3; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn-lg { padding: 15px 36px; font-size: 15px; width: 100%; border-radius: 12px; }
 
   .feedback-box { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
@@ -763,9 +763,15 @@ function renderQ() {
   if (isLast && answered[current]) {
     nextBtn.textContent = 'Finish Test →';
     nextBtn.onclick = showResults;
+    nextBtn.disabled = false;
+  } else if (isLast && !answered[current]) {
+    nextBtn.textContent = 'Finish Test →';
+    nextBtn.onclick = null;
+    nextBtn.disabled = true;
   } else {
     nextBtn.textContent = 'Next →';
     nextBtn.onclick = nextQ;
+    nextBtn.disabled = !answered[current];
   }
 }
 
@@ -777,60 +783,17 @@ function selectAnswer(idx) {
 }
 
 function nextQ() {
-  if (!answered[current]) return;
-  if (current < questions.length - 1) { current++; renderQ(); }
+  if (!answered[current]) {
+    alert('Please select an answer before proceeding.');
+    return;
+  }
+  if (current < questions.length - 1) { 
+    current++; 
+    renderQ(); 
+  }
 }
 
 function prevQ() {
-  if (current > 0) { current--; renderQ(); }
-}
-
-function showResults() {
-  showScreen('results-screen');
-  document.getElementById('progress-bar-fill').style.width = '100%';
-  document.getElementById('progress-label').textContent = `${questions.length} / ${questions.length}`;
-
-  const correct = userAnswers.filter((a, i) => a === questions[i].ans).length;
-  const wrong = questions.length - correct;
-  const pct = Math.round((correct / questions.length) * 100);
-
-  document.getElementById('res-score').textContent = correct;
-  document.getElementById('res-correct').textContent = correct;
-  document.getElementById('res-wrong').textContent = wrong;
-  document.getElementById('res-pct').textContent = pct + '%';
-
-  let grade = '';
-  if (pct >= 70) grade = '🎉 Excellent! You passed comfortably.';
-  else if (pct >= 50) grade = '👍 Good effort. A bit more revision will help.';
-  else grade = '📚 Keep studying — you can do better!';
-  document.getElementById('res-grade').textContent = grade;
-
-  const list = document.getElementById('review-list');
-  list.innerHTML = '';
-  const letters = ['A', 'B', 'C', 'D'];
-  questions.forEach((q, i) => {
-    const isCorrect = userAnswers[i] === q.ans;
-    const div = document.createElement('div');
-    div.className = 'review-item';
-    div.innerHTML = `
-      <div class="rq">${i + 1}. ${q.q}</div>
-      <span class="tag ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✓ Correct' : '✗ Wrong'}</span>
-      <div class="ra">
-        <span>Correct Answer:</span> (${letters[q.ans]}) ${q.opts[q.ans]}
-        ${!isCorrect && userAnswers[i] !== null ? `<br><span>Your Answer:</span> (${letters[userAnswers[i]]}) ${q.opts[userAnswers[i]]}` : ''}
-      </div>`;
-    list.appendChild(div);
-  });
-}
-
-function restartQuiz() {
-  current = 0;
-  userAnswers = new Array(questions.length).fill(null);
-  answered = new Array(questions.length).fill(false);
-  document.getElementById('progress-bar-fill').style.width = '0%';
-  showScreen('quiz-screen');
-  renderQ();
-}
-</script>
-</body>
-</html>
+  if (current > 0) { 
+    current--; 
+    renderQ(); 
