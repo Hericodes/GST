@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GNS 201 – Nigerian People and Culture | CBT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:   #1a6b3c;
+    --green2:  #22884e;
+    --white:   #ffffff;
+    --off:     #f5f7f5;
+    --text:    #1a1f1b;
+    --muted:   #5a6b5f;
+    --border:  #d0ddd4;
+    --correct: #1a6b3c;
+    --wrong:   #b82c2c;
+    --neutral: #e8f0ea;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--off);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--green);
+    color: #fff;
+    padding: 20px 24px 16px;
+    text-align: center;
+  }
+  header .label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-bottom: 6px; }
+  header h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.3rem, 4vw, 1.9rem); line-height: 1.2; }
+  header p { font-size: 13px; opacity: .8; margin-top: 6px; }
+
+  /* ── PROGRESS BAR ── */
+  #progress-wrap { background: #0d3d22; padding: 10px 24px; display: flex; align-items: center; gap: 12px; }
+  #progress-bar-bg { flex: 1; height: 6px; background: rgba(255,255,255,.2); border-radius: 99px; overflow: hidden; }
+  #progress-bar-fill { height: 100%; background: #5ee89a; border-radius: 99px; transition: width .4s ease; width: 0%; }
+  #progress-label { font-size: 12px; color: rgba(255,255,255,.75); white-space: nowrap; min-width: 70px; text-align: right; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── START SCREEN ── */
+  #start-screen { max-width: 540px; margin: 40px auto; padding: 0 16px 40px; text-align: center; }
+  #start-screen .card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 36px 28px; }
+  #start-screen h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 10px; }
+  #start-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+  .meta-item { background: var(--neutral); border-radius: 10px; padding: 14px 10px; }
+  .meta-item .val { font-size: 1.4rem; font-weight: 600; color: var(--green); }
+  .meta-item .key { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── QUESTION SCREEN ── */
+  #quiz-screen { max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+  .q-number { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .q-text { font-size: 1.05rem; line-height: 1.65; font-weight: 500; margin-bottom: 22px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 14px; color: var(--text);
+    transition: border-color .18s, background .18s;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--green); background: #f0f8f3; }
+  .option-btn .letter {
+    min-width: 28px; height: 28px; border-radius: 50%;
+    background: var(--neutral); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .option-btn.selected { border-color: var(--green); background: #f0f8f3; }
+  .option-btn.correct { border-color: var(--correct); background: #edf7f1; }
+  .option-btn.correct .letter { background: var(--correct); color: #fff; }
+  .option-btn.wrong { border-color: var(--wrong); background: #fdf2f2; }
+  .option-btn.wrong .letter { background: var(--wrong); color: #fff; }
+  .option-btn:disabled { cursor: default; }
+
+  .q-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 24px; border-radius: 10px; font-family: inherit; font-size: 14px;
+    font-weight: 600; cursor: pointer; border: none; transition: opacity .18s, transform .1s; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green2); }
+  .btn-outline { background: #fff; color: var(--green); border: 2px solid var(--green); }
+  .btn-outline:hover { background: #f0f8f3; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn-lg { padding: 15px 36px; font-size: 15px; width: 100%; border-radius: 12px; }
+
+  .feedback-box { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+  .feedback-box.correct-fb { background: #edf7f1; border: 1px solid #9fd9b3; color: #145a30; }
+  .feedback-box.wrong-fb { background: #fdf2f2; border: 1px solid #e8a8a8; color: #8b1f1f; }
+
+  /* ── RESULTS SCREEN ── */
+  #results-screen { max-width: 680px; margin: 0 auto; padding: 30px 16px 60px; }
+  .result-hero { background: var(--green); color: #fff; border-radius: 16px; padding: 36px 28px; text-align: center; margin-bottom: 24px; }
+  .result-hero .score-big { font-family: 'DM Serif Display', serif; font-size: clamp(3rem, 10vw, 4.5rem); line-height: 1; }
+  .result-hero .score-label { font-size: 13px; opacity: .75; margin-top: 4px; }
+  .result-hero .grade { font-size: 1rem; margin-top: 14px; opacity: .9; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .stat-card .sv { font-size: 1.6rem; font-weight: 700; }
+  .stat-card .sk { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .sv.c { color: var(--correct); }
+  .sv.w { color: var(--wrong); }
+  .sv.s { color: #b07800; }
+
+  /* Review section */
+  .review-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; margin-bottom: 16px; }
+  .review-item { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; margin-bottom: 12px; }
+  .review-item .rq { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+  .review-item .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; }
+  .tag.correct { background: #d4edda; color: var(--correct); }
+  .tag.wrong { background: #f8d7da; color: var(--wrong); }
+  .review-item .ra { font-size: 13px; color: var(--muted); }
+  .review-item .ra span { font-weight: 600; color: var(--text); }
+
+  .restart-wrap { text-align: center; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">OOU Open and Distance Learning Centre</div>
+  <h1>GNS 201 – Nigerian People and Culture</h1>
+  <p>Computer Based Test (CBT) Practice</p>
+</header>
+<div id="progress-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+  <div id="progress-label">0 / 50</div>
+</div>
+
+<!-- START SCREEN -->
+<div id="start-screen" class="screen active">
+  <div class="card">
+    <h2>Ready to Begin?</h2>
+    <p>This CBT covers all 10 Study Sessions of GNS 201. Answer all questions, then see your score and full review.</p>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="val">50</div><div class="key">Questions</div></div>
+      <div class="meta-item"><div class="val">MCQ</div><div class="key">Format (A–D)</div></div>
+      <div class="meta-item"><div class="val">10</div><div class="key">Study Sessions</div></div>
+      <div class="meta-item"><div class="val">100%</div><div class="key">Coverage</div></div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="startQuiz()">Start Test →</button>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="quiz-screen" class="screen">
+  <div class="q-number" id="q-number"></div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="options"></div>
+  <div id="feedback-box" class="feedback-box" style="display:none;"></div>
+  <div class="q-nav">
+    <button class="btn btn-outline" id="prev-btn" onclick="prevQ()">← Prev</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextQ()">Next →</button>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results-screen" class="screen">
+  <div class="result-hero">
+    <div class="score-big" id="res-score"></div>
+    <div class="score-label">out of 50</div>
+    <div class="grade" id="res-grade"></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="sv c" id="res-correct"></div><div class="sk">Correct</div></div>
+    <div class="stat-card"><div class="sv w" id="res-wrong"></div><div class="sk">Wrong</div></div>
+    <div class="stat-card"><div class="sv s" id="res-pct"></div><div class="sk">Score %</div></div>
+  </div>
+  <div class="review-title">Question Review</div>
+  <div id="review-list"></div>
+  <div class="restart-wrap">
+    <button class="btn btn-primary btn-lg" style="max-width:320px;" onclick="restartQuiz()">Retake Test</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  // ── SESSION 1: Concept of Culture ──
+  {
+    q: "According to Taylor (1891), which definition of culture is the most widely accepted?",
+    opts: [
+      "Culture is the organization of phenomena such as acts, patterns of behaviour, and belief systems.",
+      "Culture is that complex art, mortals, law, customs and any other capability acquired by man as a member of society.",
+      "Culture refers to the learned portion of human behaviour including ways of thinking, feeling, and acting.",
+      "Culture is an organization of conventional understandings persisting through tradition."
+    ],
+    ans: 1
+  },
+  {
+    q: "Culture is described as 'dynamic' because it:",
+    opts: [
+      "Remains the same across all generations.",
+      "Is learned through symbolic interactions.",
+      "Changes over time and across generations.",
+      "Is unique to only one society."
+    ],
+    ans: 2
+  },
+  {
+    q: "Which of the following is a NON-MATERIAL aspect of culture?",
+    opts: [
+      "Artifacts",
+      "Tools and implements",
+      "Language and belief system",
+      "Visible products of society"
+    ],
+    ans: 2
+  },
+  {
+    q: "Culture diffusion refers to:",
+    opts: [
+      "The slow decay of cultural practices over time.",
+      "The transmission and assimilation of culture traits from one culture to another.",
+      "A feeling of anxiety when arriving in a new country.",
+      "A distinctive culture shared by a subgroup within a larger society."
+    ],
+    ans: 1
+  },
+  {
+    q: "What term describes the feeling of anxiety, loneliness, and confusion when a person first arrives in another country?",
+    opts: [
+      "Culture lag",
+      "Culture change",
+      "Culture diffusion",
+      "Culture shock"
+    ],
+    ans: 3
+  },
+  {
+    q: "A distinctive culture shared by a group WITHIN a society is called a:",
+    opts: [
+      "Cultural trait",
+      "Cultural pattern",
+      "Subculture",
+      "Cultural complex"
+    ],
+    ans: 2
+  },
+  {
+    q: "Which two things facilitate culture in a social group, according to the course material?",
+    opts: [
+      "Laws and sanctions",
+      "Language and communication",
+      "Myths and legends",
+      "Arts and literature"
+    ],
+    ans: 1
+  },
+  {
+    q: "Culture lag occurs when:",
+    opts: [
+      "Two cultures come into contact and exchange traits.",
+      "Social change lags behind the possibilities opened by inventions and discoveries.",
+      "A new generation fails to add to the existing culture.",
+      "A minority group adopts the values of the dominant group."
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 2: Nigerian Cultures and Characteristics ──
+  {
+    q: "How many states does Nigeria currently have?",
+    opts: ["30", "19", "36", "21"],
+    ans: 2
+  },
+  {
+    q: "The amalgamation of Northern and Southern Nigeria took place in:",
+    opts: ["1900", "1914", "1960", "1963"],
+    ans: 1
+  },
+  {
+    q: "The total number of languages estimated and catalogued in Nigeria is approximately:",
+    opts: ["250", "370", "521", "600"],
+    ans: 2
+  },
+  {
+    q: "Which of the following CORRECTLY describes the Nigerian family structure?",
+    opts: [
+      "Nuclear families are the primary social unit with no extended family influence.",
+      "Extended families are the norm and serve as the backbone of the social system.",
+      "Family structure in Nigeria is identical to Western family structures.",
+      "Children are named on the first day after birth."
+    ],
+    ans: 1
+  },
+  {
+    q: "Nigeria became independent in:",
+    opts: ["1960", "1963", "1914", "1951"],
+    ans: 0
+  },
+  {
+    q: "The official language of Nigeria is:",
+    opts: ["Yoruba", "Hausa", "English", "Igbo"],
+    ans: 2
+  },
+  {
+    q: "Which religion predominantly dominates the northern part of Nigeria?",
+    opts: ["Christianity", "African Traditional Religion", "Islam", "Hinduism"],
+    ans: 2
+  },
+  {
+    q: "What is the most common form of greeting in Nigeria?",
+    opts: [
+      "A bow with hands clasped",
+      "A handshake with a warm, welcoming smile",
+      "Verbal greetings without physical contact",
+      "A hug followed by a formal title"
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 3: Ethics and Discipline ──
+  {
+    q: "Ethics or Moral Philosophy can be best described as:",
+    opts: [
+      "A set of laws created by the government to control citizens.",
+      "The philosophical study of the general nature of morality and specific moral choices.",
+      "A religious code of conduct found only in sacred books.",
+      "The scientific measurement of human happiness."
+    ],
+    ans: 1
+  },
+  {
+    q: "Normative ethics primarily aims to:",
+    opts: [
+      "Describe what moral beliefs people currently hold.",
+      "Analyse the meanings of terms used in moral discourse.",
+      "Discover or construct a consistent system of moral rules demonstrable for all mankind.",
+      "Study the history of moral codes across different cultures."
+    ],
+    ans: 2
+  },
+  {
+    q: "Analytic ethics (Meta-Ethics) is concerned with:",
+    opts: [
+      "Establishing which society has the best moral code.",
+      "Analysing the meanings of moral terms and the rules of moral reasoning.",
+      "Prescribing specific behaviours for all citizens.",
+      "Punishing those who violate moral codes."
+    ],
+    ans: 1
+  },
+  {
+    q: "Discipline, according to the Heritage Illustrated Dictionary, refers to:",
+    opts: [
+      "A form of punishment that must involve physical pain.",
+      "Training expected to produce a specified character or pattern of behaviour.",
+      "A government policy used to maintain law and order.",
+      "A philosophical theory about human nature."
+    ],
+    ans: 1
+  },
+  {
+    q: "The essential elements of SOCIAL morality include which of the following?",
+    opts: [
+      "Folkways, mores, and rituals",
+      "Social justice, individual rights, natural rights, equality, and general welfare",
+      "Crime, corruption, and cultism",
+      "Language, religion, and family structure"
+    ],
+    ans: 1
+  },
+  {
+    q: "The 'principle of utility' is most closely associated with which philosopher?",
+    opts: [
+      "John Locke",
+      "Thomas Hobbes",
+      "John Stuart Mill",
+      "David Hume"
+    ],
+    ans: 2
+  },
+  {
+    q: "Natural rights, according to John Locke, include the right to life, right to own property, and:",
+    opts: [
+      "The right to hold public office",
+      "The right to liberty",
+      "The right to a university education",
+      "The right to bear arms"
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 4: Norms and Values ──
+  {
+    q: "Norms are best described as:",
+    opts: [
+      "Material artifacts that represent cultural values.",
+      "Social and cultural guidelines by which societies live their lives.",
+      "Religious beliefs shared by all members of a community.",
+      "Government laws enforced by security agencies."
+    ],
+    ans: 1
+  },
+  {
+    q: "Folkways are approved standards of behaviour that:",
+    opts: [
+      "Are strictly enforced by formal courts and legal institutions.",
+      "Generally cover activities NOT essential to the survival of the group.",
+      "Are identical to mores in every society.",
+      "Always involve criminal sanctions when violated."
+    ],
+    ans: 1
+  },
+  {
+    q: "Which of the following BEST distinguishes mores from folkways?",
+    opts: [
+      "Mores are unimportant social customs while folkways govern moral behaviour.",
+      "Folkways are enforced by courts while mores are informal.",
+      "Mores cover moral and ethical behaviour and are more severely enforced than folkways.",
+      "Folkways deal with national security while mores deal with daily etiquette."
+    ],
+    ans: 2
+  },
+  {
+    q: "Values are best described as:",
+    opts: [
+      "Specific rules about what people should do in every situation.",
+      "Broad, abstract, shared standards of what is desirable and worthy of respect.",
+      "Legal codes enforced by police and judges.",
+      "A system of myths and folktales passed from generation to generation."
+    ],
+    ans: 1
+  },
+  {
+    q: "'Cultural universal' refers to:",
+    opts: [
+      "A cultural belief found only in African societies.",
+      "Specific values, norms, and beliefs found and cherished in ALL cultures.",
+      "The process of adopting another culture's values.",
+      "A standardised government policy on cultural development."
+    ],
+    ans: 1
+  },
+  {
+    q: "Rituals in society serve to:",
+    opts: [
+      "Replace laws and formal sanctions.",
+      "Reinforce the unity of the society and help individuals overcome major life transitions.",
+      "Encourage individual behaviour over collective responsibility.",
+      "Punish those who violate cultural norms."
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 5: Reorientation of Moral Values ──
+  {
+    q: "Moral values are defined as things that are held:",
+    opts: [
+      "Right or wrong, or desirable or undesirable.",
+      "Only by religious leaders and scholars.",
+      "Purely on the basis of government legislation.",
+      "Exclusively in academic institutions."
+    ],
+    ans: 0
+  },
+  {
+    q: "Re-orientation is described as:",
+    opts: [
+      "A government programme to redistribute wealth.",
+      "A call for re-awakening and rejuvenation for a better skill and benefit of the individual and society.",
+      "The process of translating religious texts into local languages.",
+      "An academic study of historical moral codes."
+    ],
+    ans: 1
+  },
+  {
+    q: "Which of the following is identified as a moral problem plaguing Nigeria?",
+    opts: [
+      "Rapid economic growth",
+      "Excessive patriotism",
+      "Cultism",
+      "High literacy rate"
+    ],
+    ans: 2
+  },
+  {
+    q: "The BREAKDOWN of the family unit is cited as a cause of moral problems because:",
+    opts: [
+      "It leads to over-population in urban areas.",
+      "It removes the primary environment for instilling acceptable behaviour in children.",
+      "It creates economic competition between families.",
+      "It prevents access to religious education."
+    ],
+    ans: 1
+  },
+  {
+    q: "Materialism as a cause of moral problems refers to:",
+    opts: [
+      "The study of physical materials used in traditional crafts.",
+      "A shift of people's attention from morality to the desire for instant wealth.",
+      "The over-reliance on imported goods and services.",
+      "The preference for academic qualifications over vocational training."
+    ],
+    ans: 1
+  },
+  {
+    q: "Loyalty/Patriotism as a moral value means:",
+    opts: [
+      "Blind obedience to any authority regardless of their actions.",
+      "Truthfulness and faithfulness to one's duty, obligations, and country.",
+      "Willingness to leave one's country for better opportunities abroad.",
+      "Paying tax only when compelled by law."
+    ],
+    ans: 1
+  },
+  {
+    q: "Which of the following is an EFFECT of moral problems in Nigeria?",
+    opts: [
+      "Increased foreign investment",
+      "Improved standard of education",
+      "Political instability",
+      "Strengthened family units"
+    ],
+    ans: 2
+  },
+
+  // ── SESSION 6: African Religion ──
+  {
+    q: "African religion is generally described as:",
+    opts: [
+      "A single unified religion with a written scripture known as the African Bible.",
+      "Oral rather than scriptural, including belief in a supreme creator, spirits, and the dead.",
+      "Exclusively centred on the worship of one God like Islam and Christianity.",
+      "A set of practices imported from European missionaries."
+    ],
+    ans: 1
+  },
+  {
+    q: "According to Idowu, the keynote of life for an African is:",
+    opts: [
+      "Noble ancestry and past deeds of heroes.",
+      "Economic prosperity and political power.",
+      "Religion, in all things they are religious.",
+      "Education and literacy."
+    ],
+    ans: 2
+  },
+  {
+    q: "Rites of passage in African religion include which of the following?",
+    opts: [
+      "Only marriage and funeral ceremonies.",
+      "Pregnancy, birth, puberty/initiation, marriage, and death.",
+      "Only naming ceremonies for newborns.",
+      "Annual harvest festivals and rain-making ceremonies."
+    ],
+    ans: 1
+  },
+  {
+    q: "Which of the following is TRUE about African religion?",
+    opts: [
+      "It has a single founder who established its doctrines.",
+      "It has sacred books similar to the Bible and Quran.",
+      "It has no written scriptures; beliefs are transmitted through oral traditions.",
+      "It was introduced to Africa by European missionaries in the 15th century."
+    ],
+    ans: 2
+  },
+
+  // ── SESSION 7: Arts and Culture in Pre-Colonial Nigeria ──
+  {
+    q: "The Nok culture is notable for its:",
+    opts: [
+      "Advanced system of trade with European merchants.",
+      "Early terracotta figurines and ironworking traditions.",
+      "Written legal codes predating Roman law.",
+      "Construction of the earliest mosques in West Africa."
+    ],
+    ans: 1
+  },
+  {
+    q: "The relationship between art and culture in Nigeria is described as 'Siamese' because:",
+    opts: [
+      "Both originated from the same geographic region of the country.",
+      "They are inseparably linked — art is an expression of culture and vice versa.",
+      "Both art and culture were introduced to Nigeria by foreign influences.",
+      "They are identical in meaning and always used interchangeably."
+    ],
+    ans: 1
+  },
+  {
+    q: "Igbo-Ukwu is significant in Nigerian pre-colonial history because of its:",
+    opts: [
+      "Role as the capital of the Sokoto Caliphate.",
+      "Advanced bronze casting and sophisticated metalwork artefacts.",
+      "Position as the headquarters of the Royal Niger Company.",
+      "Early adoption of Islamic scholarship in the 9th century."
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 8: Economic Self-Reliance ──
+  {
+    q: "Which of the following is listed as a factor MILITATING AGAINST economic self-reliance in Nigeria?",
+    opts: [
+      "High levels of home-grown technology",
+      "Frequent change of policies and lack of continuity",
+      "Strong anti-corruption agencies",
+      "Stable political environment"
+    ],
+    ans: 1
+  },
+  {
+    q: "State Owned Enterprises (SOEs) in Nigeria were established primarily to:",
+    opts: [
+      "Promote private sector monopolies.",
+      "Achieve economic self-reliance and provide essential services to citizens.",
+      "Increase foreign dependency on imported goods.",
+      "Replace all traditional market activities."
+    ],
+    ans: 1
+  },
+  {
+    q: "Accountability is listed as a suggested way to achieve economic self-reliance because:",
+    opts: [
+      "It allows government officials to control all resources.",
+      "It ensures that public funds are managed transparently and responsibly.",
+      "It limits the role of citizens in economic decision-making.",
+      "It eliminates the need for anti-corruption agencies."
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 9: Changing Self in a Transitional Society ──
+  {
+    q: "The 'collective identity' in Session 9 refers to:",
+    opts: [
+      "A government identity card system for all Nigerian citizens.",
+      "A shared sense of belonging among members of a group or society.",
+      "The physical characteristics that distinguish one ethnic group from another.",
+      "A formal contract between citizens and the state."
+    ],
+    ans: 1
+  },
+  {
+    q: "Social change in Nigeria is often characterised by a 'theme of loss' because:",
+    opts: [
+      "Nigeria loses foreign currency through capital flight.",
+      "Traditional values and community bonds are often disrupted during modernisation.",
+      "Citizens lose their voting rights during periods of military rule.",
+      "Government institutions lose funding due to corruption."
+    ],
+    ans: 1
+  },
+
+  // ── SESSION 10: Negative Attitude ──
+  {
+    q: "Which of the following is identified as a type of NEGATIVE attitude in the course material?",
+    opts: [
+      "The productive type",
+      "The silent killer",
+      "The visionary type",
+      "The collaborative type"
+    ],
+    ans: 1
+  },
+  {
+    q: "Cultism on Nigerian university campuses is described as a threat because:",
+    opts: [
+      "It encourages students to participate in legitimate social movements.",
+      "It promotes academic excellence and discipline among students.",
+      "It is linked to violence, killings, rape, and armed robbery, disrupting campus life.",
+      "It is a legal form of student association recognized by universities."
+    ],
+    ans: 2
+  },
+  {
+    q: "Examination malpractice is classified under negative attitudes because it:",
+    opts: [
+      "Helps students who cannot afford private lessons.",
+      "Undermines the integrity of the educational system and produces unqualified graduates.",
+      "Is only a problem in private universities.",
+      "Is a recognised coping strategy for underprepared students."
+    ],
+    ans: 1
+  },
+  {
+    q: "One consequence of a negative attitude highlighted in the course is that it:",
+    opts: [
+      "Builds resilience and long-term success.",
+      "Motivates others to work harder.",
+      "Shortens one's life and creates an unpleasant future.",
+      "Has no real impact on the individual's career."
+    ],
+    ans: 2
+  }
+];
+
+let current = 0;
+let userAnswers = new Array(questions.length).fill(null);
+let answered = new Array(questions.length).fill(false);
+
+function startQuiz() {
+  showScreen('quiz-screen');
+  renderQ();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateProgress() {
+  const pct = ((current + 1) / questions.length) * 100;
+  document.getElementById('progress-bar-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${current + 1} / ${questions.length}`;
+}
+
+function renderQ() {
+  updateProgress();
+  const q = questions[current];
+  document.getElementById('q-number').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    if (answered[current]) {
+      btn.disabled = true;
+      if (i === q.ans) btn.classList.add('correct');
+      if (i === userAnswers[current] && i !== q.ans) btn.classList.add('wrong');
+    } else if (userAnswers[current] === i) {
+      btn.classList.add('selected');
+    }
+    opts.appendChild(btn);
+  });
+
+  // Feedback
+  const fb = document.getElementById('feedback-box');
+  if (answered[current]) {
+    const isCorrect = userAnswers[current] === q.ans;
+    fb.className = 'feedback-box ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+    fb.textContent = isCorrect
+      ? '✓ Correct!'
+      : `✗ Incorrect. The correct answer is: (${letters[q.ans]}) ${q.opts[q.ans]}`;
+    fb.style.display = 'block';
+  } else {
+    fb.style.display = 'none';
+  }
+
+  document.getElementById('prev-btn').disabled = current === 0;
+  const isLast = current === questions.length - 1;
+  const nextBtn = document.getElementById('next-btn');
+  if (isLast && answered[current]) {
+    nextBtn.textContent = 'Finish Test →';
+    nextBtn.onclick = showResults;
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQ;
+  }
+}
+
+function selectAnswer(idx) {
+  if (answered[current]) return;
+  userAnswers[current] = idx;
+  answered[current] = true;
+  renderQ();
+}
+
+function nextQ() {
+  if (!answered[current]) return;
+  if (current < questions.length - 1) { current++; renderQ(); }
+}
+
+function prevQ() {
+  if (current > 0) { current--; renderQ(); }
+}
+
+function showResults() {
+  showScreen('results-screen');
+  document.getElementById('progress-bar-fill').style.width = '100%';
+  document.getElementById('progress-label').textContent = `${questions.length} / ${questions.length}`;
+
+  const correct = userAnswers.filter((a, i) => a === questions[i].ans).length;
+  const wrong = questions.length - correct;
+  const pct = Math.round((correct / questions.length) * 100);
+
+  document.getElementById('res-score').textContent = correct;
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent = wrong;
+  document.getElementById('res-pct').textContent = pct + '%';
+
+  let grade = '';
+  if (pct >= 70) grade = '🎉 Excellent! You passed comfortably.';
+  else if (pct >= 50) grade = '👍 Good effort. A bit more revision will help.';
+  else grade = '📚 Keep studying — you can do better!';
+  document.getElementById('res-grade').textContent = grade;
+
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  questions.forEach((q, i) => {
+    const isCorrect = userAnswers[i] === q.ans;
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="rq">${i + 1}. ${q.q}</div>
+      <span class="tag ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✓ Correct' : '✗ Wrong'}</span>
+      <div class="ra">
+        <span>Correct Answer:</span> (${letters[q.ans]}) ${q.opts[q.ans]}
+        ${!isCorrect && userAnswers[i] !== null ? `<br><span>Your Answer:</span> (${letters[userAnswers[i]]}) ${q.opts[userAnswers[i]]}` : ''}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function restartQuiz() {
+  current = 0;
+  userAnswers = new Array(questions.length).fill(null);
+  answered = new Array(questions.length).fill(false);
+  document.getElementById('progress-bar-fill').style.width = '0%';
+  showScreen('quiz-screen');
+  renderQ();
+}
+</script>
+</body>
+</html>
